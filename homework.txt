@@ -1,0 +1,26 @@
+After we have seen how django allows developers to customize the authentication
+model to their own need. Because that lets devs to make strong security against
+cross site scripting or cross site forgery.
+
+to learn more about django authentication customization visit:
+https://docs.djangoproject.com/en/3.2/topics/auth/customizing/
+________________________________________________________________________________
+
+1- a) Create sign up form in forms.py file in your accounts app base on account model fields
+except username.
+b) Make first and last name as optional fields.
+Hint! In order to able to make first and last name optional fields, go to accounts app and tweak account model.
+
+2- customize sign up form using django forms widgets to make input fields as bootstrap form control.
+
+3- make passwords check to make sure that confirm password match create password.
+
+4- create sign in form.
+hint! Sign n or login form only needs email and password fields.
+
+5- in accounts app views.py file, make views for both sign up and sign in forms.
+
+6- in Sign up view, make username as first name of email.
+
+7- Make logout view.
+
