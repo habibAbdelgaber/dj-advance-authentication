@@ -1,0 +1,34 @@
+.body {
+    overflow-x: hidden;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.navbar{
+  background-color: rgb(231, 229, 229);
+}
+.nav-link{
+    font-size: 18px;
+    font-weight: bold;
+    color: #000
+}
+
+#hero {
+  width: 100%;
+  max-width: 100%;
+  height: 70vh;
+  background: url("../img/bg-masthead.jpg") top center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* position: relative; */
+}
+
+/* #hero:before {
+  content: "";
+  background: rgba(0, 0, 0, 0.4);
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+} */
+
