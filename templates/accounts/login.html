@@ -2,6 +2,18 @@
 
 
 {% block content %}
+{% if request.GET.command == 'verification' %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <p class="alert alert-info" role="alert">
+                thanks! for registering with us. the email verification was sent to [{{request.GET.email}}].<br>
+                already verified! <a href="{% url 'login' %}">login</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% else %}
 <div class="form-content"
     style="min-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div class="" style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
@@ -22,10 +34,15 @@
                         </form>
                         <p class="card-text pt-2">If you do not have an account, <a href="{% url 'signup' %}">Sign
                                 Up</a></p>
+                        <p class="card-text pt-2">
+                            Forgot Password?&nbsp;
+                            <a href="{% url 'password_reset' %}">Request Password Reset</a>
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock content %}

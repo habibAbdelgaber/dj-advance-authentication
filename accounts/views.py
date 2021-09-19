@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import HttpResponse
 from .models import Account
 from .forms import UserRegistrationForm, LoginForm
 
@@ -39,7 +40,7 @@ def register(request):
             # user.phone_number = phone_number
             user.save()
             current_site = get_current_site(request)
-            mail_object = 'Please activate Your account'
+            mail_subject = 'Please activate Your account'
             message = render_to_string('accounts/account_verification_email.html',{
                 'user': user,
                 'domain': current_site,
@@ -49,16 +50,13 @@ def register(request):
 
             to_mail = email
             send_mail = EmailMessage(
-                mail_object,
+                mail_subject,
                 message,
                 to=[to_mail]
             )
             send_mail.send()
             # messages.success(request, 'Your account was created successfully')
-            return redirect('/signin/?command=verification&email=' + email)
-        # else:
-        #     messages.error(request, 'Something went wrong, please try again')
-        #     return redirect('signup')
+            return redirect('/login/?command=verification&email=' + email)
     else:
         form = UserRegistrationForm()
     context = {'form': form}
@@ -84,13 +82,13 @@ def login(request):
                     return redirect('/')
                 else:
                     messages.error(request, 'Please confirm or activate you account and login')
-                    return redirect('signin')
+                    return redirect('login')
             else:
                 messages.error(request, 'that account does not exists')
-                return redirect('signin')
+                return redirect('login')
         else:
             messages.error(request, 'invalid email or password')
-            return redirect('signin')
+            return redirect('login')
 
     else:
         form = LoginForm()
@@ -99,4 +97,84 @@ def login(request):
     return render(request, 'accounts/login.html', context)
 
 def activate(request, uidb64, token):
-    return HttpResponse('ok')    
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = Account._default_manager.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        messages.success(request, 'You have confirmed your account go ahead and login!')
+        return redirect('login')
+    else:
+        messages.error(request, 'link is expired!')
+        return redirect('signup')
+
+
+
+# Request Password Reset View
+def password_reset(request):
+    if request.method == 'POST':
+        # Here we're using html form input to get the email, but we can use django forms to make form inputs dynamic.
+        # So, use django forms to make email form instead.
+        email = request.POST['email']
+        if Account.objects.filter(email=email).exists():
+            user = Account.objects.get(email__exact=email)
+            current_site = get_current_site(request)
+            mail_subject = 'Please activate Your account'
+            message = render_to_string('accounts/password_reset_email.html',{
+                'user': user,
+                'domain': current_site,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': default_token_generator.make_token(user)
+            })
+
+            to_mail = email
+            send_mail = EmailMessage(
+                mail_subject,
+                message,
+                to=[to_mail]
+            )
+            send_mail.send()
+            messages.success(request, 'We have sent password reset email to your email address')
+            return redirect('login')
+        else:
+            messages.error(request, 'account does not exits, please try again!')
+            return redirect('password_reset')
+    return render(request, 'accounts/password_reset.html')
+
+def password_reset_done(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = Account._default_manager.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        request.session['uid'] = uid
+        messages.success(request, 'Please Reset your password')
+        return redirect('password_reset_confirm')
+    else:
+        messages.error(request, 'the link has been expired')
+        return redirect('password_reset')
+
+def password_reset_confirm(request):
+    if request.method == 'POST':
+        # Here we're using html form inputs to get password and password confirm, but we can use django forms to make form inputs dynamic.
+        # So, use django forms to make password and password confirm form instead.
+        password = request.POST['password']
+        password_confirm = request.POST['password_confirm']
+        if password_confirm == password:
+            uid = request.session.get('uid')
+            user = Account.objects.get(pk=uid)
+            user.set_password(password)
+            user.save()
+            messages.success(request, 'Password has been set. go ahead and login')
+            return redirect('login')
+        else:
+            messages.error(request, 'Passwords do not match!')
+            return redirect('password_reset_confirm')
+    else:
+        return render(request, 'accounts/password_reset_confirm.html')

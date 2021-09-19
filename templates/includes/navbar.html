@@ -13,7 +13,7 @@
             <div class="navbar-nav ms-auto">
 
                 {% if not request.user.is_authenticated %}
-                <a class="nav-link" href="{% url 'signin' %}"><span class="badge rounded-pill bg-primary pt-2 pb-2">Sign
+                <a class="nav-link" href="{% url 'login' %}"><span class="badge rounded-pill bg-primary pt-2 pb-2">Sign
                         In</span>&nbsp;|</a>
                 <a class="nav-link" href="{% url 'signup' %}"><span class="badge rounded-pill bg-primary pt-2 pb-2">Sign
                         Up</span>
