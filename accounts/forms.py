@@ -37,3 +37,23 @@ class UserRegistrationForm(forms.ModelForm):
 class LoginForm(forms.Form):
     email = forms.EmailField(widget=forms.TextInput(attrs={'placeholder': 'Your e-mail address', 'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
+
+
+
+class EmailRequestForm(forms.Form):
+    email = forms.EmailField(widget=forms.TextInput(attrs={'placeholder': 'Your e-mail address', 'class': 'form-control'}))
+    
+
+
+class UserPasswordReset(forms.Form):
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'placeholder': 'Create Password', 'class': 'form-control'}))
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'placeholder': 'Reapeat Password', 'class': 'form-control'}))
+
+
+    def clean(self):
+        cleaned_data = super(UserPasswordReset, self).clean()
+        password = cleaned_data['password']
+        confirm_password = cleaned_data['confirm_password']
+        if password != confirm_password:
+            raise forms.ValidationError('passwords do not match!')
+

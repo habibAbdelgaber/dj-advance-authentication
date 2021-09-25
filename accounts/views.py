@@ -2,7 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import HttpResponse
 from .models import Account
-from .forms import UserRegistrationForm, LoginForm
+from .forms import(
+    LoginForm,
+    EmailRequestForm,
+    UserPasswordReset,
+    UserRegistrationForm
+    )
 
 from django.contrib import auth
 from django.contrib.auth import authenticate
@@ -119,31 +124,37 @@ def password_reset(request):
     if request.method == 'POST':
         # Here we're using html form input to get the email, but we can use django forms to make form inputs dynamic.
         # So, use django forms to make email form instead.
-        email = request.POST['email']
-        if Account.objects.filter(email=email).exists():
-            user = Account.objects.get(email__exact=email)
-            current_site = get_current_site(request)
-            mail_subject = 'Please activate Your account'
-            message = render_to_string('accounts/password_reset_email.html',{
-                'user': user,
-                'domain': current_site,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': default_token_generator.make_token(user)
-            })
+        form = EmailRequestForm(request.POST or None)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            if Account.objects.filter(email=email).exists():
+                user = Account.objects.get(email__exact=email)
+                current_site = get_current_site(request)
+                mail_subject = 'Please activate Your account'
+                message = render_to_string('accounts/password_reset_email.html',{
+                    'user': user,
+                    'domain': current_site,
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                    'token': default_token_generator.make_token(user)
+                })
 
-            to_mail = email
-            send_mail = EmailMessage(
-                mail_subject,
-                message,
-                to=[to_mail]
-            )
-            send_mail.send()
-            messages.success(request, 'We have sent password reset email to your email address')
-            return redirect('login')
+                to_mail = email
+                send_mail = EmailMessage(
+                    mail_subject,
+                    message,
+                    to=[to_mail]
+                )
+                send_mail.send()
+                messages.success(request, 'We have sent password reset email to your email address')
+                return redirect('login')
         else:
             messages.error(request, 'account does not exits, please try again!')
             return redirect('password_reset')
-    return render(request, 'accounts/password_reset.html')
+    else:
+        form = EmailRequestForm()
+    
+    context = {'form': form}
+    return render(request, 'accounts/password_reset.html', context)
 
 def password_reset_done(request, uidb64, token):
     try:
@@ -164,17 +175,19 @@ def password_reset_confirm(request):
     if request.method == 'POST':
         # Here we're using html form inputs to get password and password confirm, but we can use django forms to make form inputs dynamic.
         # So, use django forms to make password and password confirm form instead.
-        password = request.POST['password']
-        password_confirm = request.POST['password_confirm']
-        if password_confirm == password:
+        # password = request.POST['password']
+        # password_confirm = request.POST['password_confirm']
+        form = UserPasswordReset(request.POST or None)
+        if form.is_valid():
+            password = form.POST['password']
             uid = request.session.get('uid')
             user = Account.objects.get(pk=uid)
             user.set_password(password)
             user.save()
             messages.success(request, 'Password has been set. go ahead and login')
             return redirect('login')
-        else:
-            messages.error(request, 'Passwords do not match!')
-            return redirect('password_reset_confirm')
     else:
-        return render(request, 'accounts/password_reset_confirm.html')
+        form = UserPasswordReset()
+
+    context = {'form': form}
+    return render(request, 'accounts/password_reset_confirm.html', context)
